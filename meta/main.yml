@@ -1,0 +1,32 @@
+---
+dependencies: []
+
+galaxy_info:
+  role_name: ludus_caldera_agent
+  author: frack113
+  description: An Ansible Role that install CALDERA agent
+  company: freelance
+  license: GPLv3
+  min_ansible_version: "2.10"
+  platforms:
+    # Modify the platforms here as required
+    # This example includes a lot, see https://github.com/ansible/ansible-lint/blob/main/src/ansiblelint/schemas/meta.json for all possibilities
+    - name: Debian
+      versions:
+        - "buster"
+        - "bullseye"
+        - "bookworm"
+    - name: Ubuntu
+      versions:
+        - "bionic"
+        - "focal"
+        - "jammy"
+    - name: Windows
+      versions:
+        - "all"
+  galaxy_tags:
+    - purple
+    - mitre
+    - caldera
+
+collections: [] # Add any collections needed here

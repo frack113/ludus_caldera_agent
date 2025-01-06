@@ -1,0 +1,15 @@
+---
+
+- name: Find VM with ludus_caldera_server as a role
+  ansible.builtin.set_fact:
+    ludus_caldera_vm: "{{ ludus | search_roles('ludus_caldera_server') }}"
+
+- name: Fail if no caldera server VM found
+  ansible.builtin.fail:
+    msg: "Could not find any VM that has the *.ludus_caldera_server role in your config"
+  when: ludus_caldera_vm is undefined or ludus_caldera_vm == None or ludus_caldera_vm | length == 0
+
+- name: Setup Caldera agent on a Windows machine
+  ansible.builtin.include_tasks:
+    file: windows.yml
+  when: ansible_os_family == "Windows"

