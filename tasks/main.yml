@@ -6,7 +6,7 @@
 
 - name: Fail if no caldera server VM found
   ansible.builtin.fail:
-    msg: "Could not find any VM that has the frack113.ludus_caldera_server role in your config"
+    msg: "Could not find any VM that has the frack113.ludus_caldera_server role in your configuration"
   when: ludus_caldera_vm is undefined or ludus_caldera_vm == None or ludus_caldera_vm | length == 0
 
 - name: Setup Caldera agent on a Windows machine

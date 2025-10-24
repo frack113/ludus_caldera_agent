@@ -1,0 +1,3 @@
+$server="http://10.{{ range_second_octet }}.{{ ludus_caldera_vm.vlan }}.{{ ludus_caldera_vm.ip_last_octet }}:8888";
+get-process | ? {$_.modules.filename -like "{{ ludus_caldera_windows_agent_name}}"} | stop-process -f;
+Start-Process -FilePath "{{ ludus_caldera_windows_agent_name }}" -ArgumentList "-server $server -group red" -WindowStyle hidden;

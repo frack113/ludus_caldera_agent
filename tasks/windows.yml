@@ -32,11 +32,21 @@
       [io.file]::WriteAllBytes("{{ ludus_caldera_windows_agent_name }}",$data) | Out-Null;
   when: not agent_exe.stat.exists
 
-- name: Start agent
-  ansible.windows.win_powershell:
-    script: |
-      $server="http://10.{{ range_second_octet }}.{{ ludus_caldera_vm.vlan }}.{{ ludus_caldera_vm.ip_last_octet }}:8888";
-      get-process | ? {$_.modules.filename -like "{{ ludus_caldera_windows_agent_name}}"} | stop-process -f;
-      Start-Process -FilePath "{{ ludus_caldera_windows_agent_name }}" -ArgumentList "-server $server -group red" -WindowStyle hidden;
-  async: 180
-  poll: 0
+- name: Make agent.ps1
+  ansible.builtin.template:
+    src: templates/agent.j2
+    dest: C:/ludus/agent.ps1
+
+- name: Check Run key for caldera script Run
+  ansible.windows.win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+    name: caldera
+  register: caldera_run_key_stat
+
+- name: Create caldera Run key (if key does not exist)
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+    name: caldera
+    data: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -NonInteractive -File "C:\ludus\agent.ps1"'
+    state: present
+  when: not caldera_run_key_stat.exists
